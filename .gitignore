@@ -1,0 +1,21 @@
+# Python
+backend/venv/
+__pycache__/
+*.pyc
+db.sqlite3
+
+# Environment files
+.env
+
+# Node modules
+frontend/node_modules/
+
+# Build folders
+dist/
+build/
+
+# VS Code
+.vscode/
+
+# Mac
+.DS_Store
