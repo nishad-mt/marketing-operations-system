@@ -6,6 +6,7 @@ class GoogleLoginSerializer(serializers.Serializer):
     ROLE_CHOICES = [
 
         ("social_media", "Social Media"),
+        ("social_media_executive", "Social Media Executive"),
 
         ("performance_marketer", "Performance Marketer"),
 
@@ -18,6 +19,7 @@ class GoogleLoginSerializer(serializers.Serializer):
         ("creator", "Creator"),
 
         ("editor", "Editor"),
+        ("video_editor", "Video Editor"),
     ]
 
     token = serializers.CharField()

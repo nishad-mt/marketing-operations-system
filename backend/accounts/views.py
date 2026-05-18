@@ -81,6 +81,7 @@ class GoogleLoginView(APIView):
                         "name": existing_user.first_name,
                         "email": existing_user.email,
                         "role": existing_user.role,
+                        "profile_picture": existing_user.profile_picture,
                         "department": (
                             existing_user.department.name
                             if existing_user.department
@@ -96,6 +97,7 @@ class GoogleLoginView(APIView):
                 "manager": "management",
 
                 "social_media": "social_media",
+                "social_media_executive": "social_media",
 
                 "performance_marketer":
                     "performance_marketing",
@@ -109,6 +111,7 @@ class GoogleLoginView(APIView):
                 "creator": "production",
 
                 "editor": "post_production",
+                "video_editor": "post_production",
             }
 
             department_name = role_department_map.get(

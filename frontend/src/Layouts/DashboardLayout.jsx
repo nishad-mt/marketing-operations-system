@@ -1,6 +1,16 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function DashboardLayout({ children, user }) {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
+
+  const avatarUrl = user?.profile_picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "User")}&background=random`;
 
   return (
 
@@ -61,7 +71,7 @@ function DashboardLayout({ children, user }) {
           <div className="flex items-center gap-3">
 
             <img
-              src={user?.profile_picture}
+              src={avatarUrl}
               alt="profile"
               className="w-11 h-11 rounded-full"
             />
@@ -72,8 +82,8 @@ function DashboardLayout({ children, user }) {
                 {user?.name}
               </h3>
 
-              <p className="text-xs text-gray-500">
-                {user?.role}
+              <p className="text-xs text-gray-500 capitalize">
+                {user?.role?.replace(/_/g, ' ')}
               </p>
 
             </div>
@@ -106,7 +116,10 @@ function DashboardLayout({ children, user }) {
           </div>
 
 
-          <button className="bg-black text-white px-5 py-2 rounded-xl hover:opacity-90 transition">
+          <button 
+            onClick={handleLogout}
+            className="bg-black text-white px-5 py-2 rounded-xl hover:opacity-90 transition"
+          >
             Logout
           </button>
 

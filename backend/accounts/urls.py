@@ -2,13 +2,13 @@ from django.urls import path
 
 from .views import (
     GoogleLoginView,
-    ApproveUserView
+    ApproveUserView,
 )
 
 urlpatterns = [
 
     path(
-        '',
+        'google/',
         GoogleLoginView.as_view()
     ),
 
