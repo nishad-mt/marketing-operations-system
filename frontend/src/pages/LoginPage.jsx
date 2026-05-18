@@ -1,5 +1,6 @@
 import { GoogleLogin } from '@react-oauth/google'
 import axios from 'axios'
+import { Link } from 'react-router-dom'
 
 function LoginPage() {
 
@@ -29,6 +30,19 @@ function LoginPage() {
                 onSuccess={handleSuccess}
                 onError={() => console.log("Login Failed")}
             />
+
+            <div className="mt-6 text-center text-sm text-gray-500">
+
+                Don&apos;t have an account?{' '}
+
+                <Link
+                    to="/signup"
+                    className="font-semibold text-black hover:underline"
+                >
+                    Signup
+                </Link>
+
+            </div>
         </div>
     )
 }
