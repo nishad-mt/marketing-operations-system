@@ -6,12 +6,11 @@ import {
   TrendingUp,
 } from "lucide-react";
 
+import { useEffect, useState } from "react";
+import axios from "axios";
 
-function StatCard({
-  title,
-  value,
-  icon,
-}) {
+
+function StatCard({ title, value, icon }) {
 
   return (
 
@@ -40,60 +39,103 @@ function StatCard({
 
 function ManagerSection() {
 
-  // Temporary mock data
-  // Later fetch from backend
+  const [pendingApprovals, setPendingApprovals] = useState([]);
+  const [stats, setStats] = useState({
+    totalEmployees: 0,
+    activeTasks: 0,
+    pendingReviews: 0,
+    completedThisMonth: 0,
+  });
+  const [recentTasks, setRecentTasks] = useState([]);
 
-  const stats = {
+  const token = localStorage.getItem("access");
 
-    totalEmployees: 24,
+  useEffect(() => {
+    fetchPendingUsers();
+    fetchStats();
 
-    activeTasks: 18,
+    const intervalId = setInterval(() => {
+      fetchPendingUsers();
+      fetchStats();
+    }, 10000); // Poll every 10 seconds
 
-    pendingReviews: 6,
+    return () => clearInterval(intervalId);
+  }, []);
 
-    completedThisMonth: 42,
+  const fetchStats = async () => {
+    try {
+      const response = await axios.get(
+        "http://127.0.0.1:8000/api/auth/manager-dashboard-stats/",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setStats({
+        totalEmployees: response.data.totalEmployees,
+        activeTasks: response.data.activeTasks,
+        pendingReviews: response.data.pendingReviews,
+        completedThisMonth: response.data.completedThisMonth,
+      });
+      setRecentTasks(response.data.recentTasks || []);
+    } catch (error) {
+      console.log("ERROR FETCHING STATS:", error);
+    }
   };
 
 
-  const pendingApprovals = [
+  const fetchPendingUsers = async () => {
 
-    {
-      id: 1,
-      name: "Rahul",
-      role: "Script Writer",
-    },
+  try {
 
-    {
-      id: 2,
-      name: "Ameen",
-      role: "Video Editor",
-    },
-  ];
+    const response = await axios.get(
+
+      "http://127.0.0.1:8000/api/auth/pending-users/",
+
+      {
+        headers:{
+          Authorization:`Bearer ${token}`
+        }
+      }
+    );
+
+    console.log("API RESPONSE:", response.data);
+
+    setPendingApprovals(response.data);
+
+  } catch(error){
+
+    console.log("ERROR:", error.response);
+  }
+};
 
 
-  const recentTasks = [
+  const approveUser = async(id)=>{
 
-    {
-      id: 1,
-      title: "NEET Reel Campaign",
-      department: "Content",
-      status: "Pending Review",
-    },
+    try{
 
-    {
-      id: 2,
-      title: "JEE Poster Design",
-      department: "Creative",
-      status: "In Progress",
-    },
+      await axios.patch(
 
-    {
-      id: 3,
-      title: "Admissions Copywriting",
-      department: "Marketing",
-      status: "Completed",
-    },
-  ];
+        `http://127.0.0.1:8000/api/auth/approve/${id}/`,
+
+        {},
+
+        {
+          headers:{
+            Authorization:
+              `Bearer ${token}`,
+          },
+        }
+      );
+
+      fetchPendingUsers();
+
+    }catch(error){
+
+      console.log(error);
+    }
+  };
 
 
   return (
@@ -131,157 +173,106 @@ function ManagerSection() {
       </div>
 
 
-      {/* Main Grid */}
+      {/* Pending Approvals */}
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="bg-white rounded-2xl shadow-sm p-6">
 
-        {/* Pending Approvals */}
+        <div className="flex items-center justify-between mb-5">
 
-        <div className="bg-white rounded-2xl shadow-sm p-6">
+          <h2 className="text-xl font-semibold">
+            Pending Approvals
+          </h2>
 
-          <div className="flex items-center justify-between mb-5">
+          <div className="bg-red-100 text-red-600 text-xs px-3 py-1 rounded-full">
 
-            <h2 className="text-xl font-semibold">
-              Pending Approvals
-            </h2>
-
-            <div className="bg-red-100 text-red-600 text-xs px-3 py-1 rounded-full">
-              {pendingApprovals.length} Pending
-            </div>
-
-          </div>
-
-
-          <div className="space-y-4">
-
-            {pendingApprovals.map((user) => (
-
-              <div
-                key={user.id}
-                className="border border-gray-200 rounded-xl p-4"
-              >
-
-                <div className="flex items-center justify-between">
-
-                  <div>
-
-                    <h3 className="font-semibold text-gray-900">
-                      {user.name}
-                    </h3>
-
-                    <p className="text-sm text-gray-500">
-                      {user.role}
-                    </p>
-
-                  </div>
-
-
-                  <button className="bg-black text-white px-4 py-2 rounded-lg text-sm hover:opacity-90">
-
-                    Approve
-
-                  </button>
-
-                </div>
-
-              </div>
-
-            ))}
+            {pendingApprovals.length} Pending
 
           </div>
 
         </div>
 
 
-        {/* Recent Tasks */}
+        <div className="space-y-4">
 
-        <div className="bg-white rounded-2xl shadow-sm p-6 xl:col-span-2">
+          {pendingApprovals.map((user) => (
 
-          <div className="flex items-center justify-between mb-5">
+            <div
+              key={user.id}
+              className="border border-gray-200 rounded-xl p-4"
+            >
 
-            <h2 className="text-xl font-semibold">
-              Recent Tasks
-            </h2>
-
-            <button className="text-sm font-medium hover:underline">
-              View All
-            </button>
-
-          </div>
-
-
-          <div className="space-y-4">
-
-            {recentTasks.map((task) => (
-
-              <div
-                key={task.id}
-                className="border border-gray-200 rounded-xl p-4 flex items-center justify-between"
-              >
+              <div className="flex items-center justify-between">
 
                 <div>
 
                   <h3 className="font-semibold text-gray-900">
-                    {task.title}
+                    {user.name || user.email || "Unknown User"}
                   </h3>
 
-                  <p className="text-sm text-gray-500 mt-1">
-                    {task.department}
+                  <p className="text-sm text-gray-500">
+                    {user.role}
                   </p>
 
                 </div>
 
 
-                <div>
+                <button
 
-                  {task.status ===
-                    "Pending Review" && (
+                  onClick={()=>
+                    approveUser(user.id)
+                  }
 
-                    <div className="flex items-center gap-2 text-orange-500 text-sm">
+                  className="
+                  bg-black
+                  text-white
+                  px-4
+                  py-2
+                  rounded-lg
+                  text-sm
+                  hover:opacity-90
+                  "
 
-                      <Clock3 size={16} />
+                >
 
-                      Pending Review
+                  Approve
 
-                    </div>
-                  )}
-
-
-                  {task.status ===
-                    "In Progress" && (
-
-                    <div className="flex items-center gap-2 text-blue-500 text-sm">
-
-                      <ClipboardList size={16} />
-
-                      In Progress
-
-                    </div>
-                  )}
-
-
-                  {task.status ===
-                    "Completed" && (
-
-                    <div className="flex items-center gap-2 text-green-600 text-sm">
-
-                      <CheckCircle2 size={16} />
-
-                      Completed
-
-                    </div>
-                  )}
-
-                </div>
+                </button>
 
               </div>
 
-            ))}
+            </div>
 
-          </div>
+          ))}
 
         </div>
 
+      </div>
+
+      {/* Recent Tasks */}
+      <div className="bg-white rounded-2xl shadow-sm p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-xl font-semibold">Recent Tasks</h2>
+        </div>
+        
+        <div className="space-y-4">
+          {recentTasks.map((task) => (
+            <div
+              key={task.id}
+              className="border border-gray-200 rounded-xl p-4 flex items-center justify-between"
+            >
+              <div>
+                <h3 className="font-semibold text-gray-900">{task.title}</h3>
+                <p className="text-sm text-gray-500">{task.department}</p>
+              </div>
+              <div className="text-sm font-medium bg-gray-100 px-3 py-1 rounded-full text-gray-700">
+                {task.status}
+              </div>
+            </div>
+          ))}
+          {recentTasks.length === 0 && (
+            <p className="text-gray-500 text-sm">No recent tasks available.</p>
+          )}
+        </div>
       </div>
 
     </div>

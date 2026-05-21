@@ -1,7 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 
-import LoginPage from './pages/LoginPage'
-import SignupPage from './pages/SignupPage'
+import AuthPage from './pages/AuthPage'
 import DashboardPage from './pages/DashboardPage'
 
 function App() {
@@ -12,17 +11,17 @@ function App() {
 
       <Route
         path="/"
-        element={<LoginPage />}
+        element={<AuthPage />}
       />
 
       <Route
         path="/login"
-        element={<LoginPage />}
+        element={<AuthPage />}
       />
 
       <Route
         path="/signup"
-        element={<SignupPage />}
+        element={<AuthPage />}
       />
 
       <Route

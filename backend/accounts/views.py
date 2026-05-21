@@ -185,8 +185,6 @@ class ApproveUserView(APIView):
 
         current_user = request.user
 
-        # Only managers or superusers
-        # can approve users
 
         if (
             current_user.role != "manager"
@@ -228,3 +226,126 @@ class ApproveUserView(APIView):
 
                 status=status.HTTP_404_NOT_FOUND
             )
+        
+class PendingUserView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        
+        current_user = request.user
+
+        if (
+            current_user.role != "manager"
+            and not current_user.is_superuser
+        ):
+
+            return Response(
+
+                {
+                    "error": "Permission denied"
+                },
+
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        users = User.objects.filter(is_approved=False, is_superuser=False)
+
+        data = []
+
+        for user in users:
+            data.append({
+                "id" : user.id,
+
+                "name": user.first_name,
+
+                "email": user.email,
+
+                "mobile_number": user.mobile_number,
+
+                "role": user.role,
+
+                "department": (
+                    user.department.name
+                    if user.department
+                    else None
+                )
+            })
+
+        return Response(data)
+
+class RejectUserView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, user_id):
+
+        current_user = request.user
+
+        if (
+            current_user.role != "manager"
+            and not current_user.is_superuser
+        ):
+            return Response(
+                {"error":"Permission Denied"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        try:
+
+            user = User.objects.get(id=user_id)
+
+            user.delete()
+
+        except User.DoesNotExist:
+
+            return Response(
+                {"error":"User not Found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+class ManagerDashboardStatsView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        
+        current_user = request.user
+
+        if (
+            current_user.role != "manager"
+            and not current_user.is_superuser
+        ):
+            return Response(
+                {"error": "Permission denied"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        total_employees = User.objects.filter(is_approved=True).count()
+
+        # Mocked data since tasks model is not implemented yet
+        active_tasks = 18
+        pending_reviews = 6
+        completed_this_month = 42
+
+        recent_tasks = [
+            {
+                "id": 1,
+                "title": "NEET Reel Campaign",
+                "department": "Content",
+                "status": "Pending Review",
+            },
+            {
+                "id": 2,
+                "title": "JEE Poster Design",
+                "department": "Creative",
+                "status": "In Progress",
+            },
+        ]
+
+        return Response({
+            "totalEmployees": total_employees,
+            "activeTasks": active_tasks,
+            "pendingReviews": pending_reviews,
+            "completedThisMonth": completed_this_month,
+            "recentTasks": recent_tasks
+        })
