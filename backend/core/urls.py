@@ -13,4 +13,8 @@ urlpatterns = [
         'api/auth/',
         include('accounts.urls')
     ),
+    path(
+        'api/tasks/',
+        include('tasks.urls')
+    ),
 ]

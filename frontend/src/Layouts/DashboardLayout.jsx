@@ -1,13 +1,19 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function DashboardLayout({ children, user }) {
   const navigate = useNavigate();
+  const { logout } = useAuth() || {};
 
   const handleLogout = () => {
-    localStorage.removeItem("access");
-    localStorage.removeItem("refresh");
-    localStorage.removeItem("user");
-    navigate("/login");
+    if (logout) {
+        logout();
+    } else {
+        localStorage.removeItem("access");
+        localStorage.removeItem("refresh");
+        localStorage.removeItem("user");
+        navigate("/login");
+    }
   };
 
   const avatarUrl = user?.profile_picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || "User")}&background=random`;

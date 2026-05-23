@@ -322,25 +322,21 @@ class ManagerDashboardStatsView(APIView):
         
         total_employees = User.objects.filter(is_approved=True).count()
 
-        # Mocked data since tasks model is not implemented yet
-        active_tasks = 18
-        pending_reviews = 6
-        completed_this_month = 42
+        from tasks.models import Task
 
-        recent_tasks = [
-            {
-                "id": 1,
-                "title": "NEET Reel Campaign",
-                "department": "Content",
-                "status": "Pending Review",
-            },
-            {
-                "id": 2,
-                "title": "JEE Poster Design",
-                "department": "Creative",
-                "status": "In Progress",
-            },
-        ]
+        active_tasks = Task.objects.exclude(status__in=['completed', 'approved']).count()
+        pending_reviews = Task.objects.filter(status='in_review').count()
+        completed_this_month = Task.objects.filter(status='approved').count() # Simplified
+
+        recent_tasks_qs = Task.objects.all().order_by('-created_at')[:5]
+        recent_tasks = []
+        for t in recent_tasks_qs:
+            recent_tasks.append({
+                "id": t.id,
+                "title": t.title,
+                "department": t.department.name if t.department else "None",
+                "status": t.get_status_display(),
+            })
 
         return Response({
             "totalEmployees": total_employees,
@@ -349,3 +345,41 @@ class ManagerDashboardStatsView(APIView):
             "completedThisMonth": completed_this_month,
             "recentTasks": recent_tasks
         })
+
+class EmployeeListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        current_user = request.user
+
+        if current_user.role != "manager" and not current_user.is_superuser:
+            return Response(
+                {"error": "Permission denied"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        users = User.objects.filter(is_approved=True, is_superuser=False).prefetch_related('assigned_tasks')
+        
+        data = []
+        for user in users:
+            # Active tasks for this user
+            user_tasks = user.assigned_tasks.exclude(status__in=['approved', 'completed'])
+            tasks_data = []
+            for t in user_tasks:
+                tasks_data.append({
+                    "id": t.id,
+                    "title": t.title,
+                    "status": t.get_status_display(),
+                    "due_date": t.due_date.isoformat() if t.due_date else None,
+                })
+
+            data.append({
+                "id": user.id,
+                "name": user.first_name,
+                "email": user.email,
+                "role": user.role,
+                "department": user.department.name if user.department else None,
+                "active_tasks": tasks_data,
+            })
+
+        return Response(data)

@@ -1,6 +1,7 @@
   import { useEffect } from "react";
   import { useNavigate } from "react-router-dom";
   import DashboardLayout from "../Layouts/DashboardLayout";
+  import { useAuth } from "../context/AuthContext";
 
   import ManagerSection from "../components/dashboard/ManagerSection";
   import ContentSection from "../components/dashboard/ContentSection";
@@ -10,22 +11,24 @@
 
   function DashboardPage() {
     const navigate = useNavigate();
-    const storedUser = localStorage.getItem("user");
-    const token = localStorage.getItem("access");
-    const user = storedUser ? JSON.parse(storedUser) : null;
+    const { user, loading } = useAuth() || {};
 
     useEffect(() => {
-      if (!token || !user) {
+      if (!loading && !user) {
         navigate("/login");
       }
-    }, [token, user, navigate]);
+    }, [user, loading, navigate]);
 
-    if (!token || !user) {
+    if (loading) {
       return (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-          <p className="text-gray-500 font-medium">Redirecting to login...</p>
+          <p className="text-gray-500 font-medium">Loading...</p>
         </div>
       );
+    }
+
+    if (!user) {
+      return null;
     }
 
 

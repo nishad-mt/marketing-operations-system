@@ -7,39 +7,29 @@ import {
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
-
+import api from "../../services/api";
 
 function StatCard({ title, value, icon }) {
-
   return (
-
     <div className="bg-white rounded-2xl shadow-sm p-5 border border-gray-100">
-
       <div className="flex items-center justify-between mb-4">
-
         <p className="text-gray-500 text-sm">
           {title}
         </p>
-
         <div className="bg-gray-100 p-2 rounded-xl">
           {icon}
         </div>
-
       </div>
-
       <h2 className="text-3xl font-bold text-gray-900">
         {value}
       </h2>
-
     </div>
   );
 }
 
-
 function ManagerSection() {
-
   const [pendingApprovals, setPendingApprovals] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [stats, setStats] = useState({
     totalEmployees: 0,
     activeTasks: 0,
@@ -48,15 +38,15 @@ function ManagerSection() {
   });
   const [recentTasks, setRecentTasks] = useState([]);
 
-  const token = localStorage.getItem("access");
-
   useEffect(() => {
     fetchPendingUsers();
     fetchStats();
+    fetchEmployees();
 
     const intervalId = setInterval(() => {
       fetchPendingUsers();
       fetchStats();
+      fetchEmployees();
     }, 10000); // Poll every 10 seconds
 
     return () => clearInterval(intervalId);
@@ -64,14 +54,7 @@ function ManagerSection() {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get(
-        "http://127.0.0.1:8000/api/auth/manager-dashboard-stats/",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await api.get("/auth/manager-dashboard-stats/");
       setStats({
         totalEmployees: response.data.totalEmployees,
         activeTasks: response.data.activeTasks,
@@ -84,59 +67,33 @@ function ManagerSection() {
     }
   };
 
-
   const fetchPendingUsers = async () => {
-
-  try {
-
-    const response = await axios.get(
-
-      "http://127.0.0.1:8000/api/auth/pending-users/",
-
-      {
-        headers:{
-          Authorization:`Bearer ${token}`
-        }
-      }
-    );
-
-    console.log("API RESPONSE:", response.data);
-
-    setPendingApprovals(response.data);
-
-  } catch(error){
-
-    console.log("ERROR:", error.response);
-  }
-};
-
-
-  const approveUser = async(id)=>{
-
-    try{
-
-      await axios.patch(
-
-        `http://127.0.0.1:8000/api/auth/approve/${id}/`,
-
-        {},
-
-        {
-          headers:{
-            Authorization:
-              `Bearer ${token}`,
-          },
-        }
-      );
-
-      fetchPendingUsers();
-
-    }catch(error){
-
-      console.log(error);
+    try {
+      const response = await api.get("/auth/pending-users/");
+      setPendingApprovals(response.data);
+    } catch(error){
+      console.log("ERROR:", error.response);
     }
   };
 
+  const fetchEmployees = async () => {
+    try {
+      const response = await api.get("/auth/employees/");
+      setEmployees(response.data);
+    } catch(error) {
+      console.log("ERROR FETCHING EMPLOYEES:", error);
+    }
+  };
+
+  const approveUser = async(id) => {
+    try{
+      await api.patch(`/auth/approve/${id}/`, {});
+      fetchPendingUsers();
+      fetchEmployees();
+    }catch(error){
+      console.log(error);
+    }
+  };
 
   return (
 
@@ -271,6 +228,48 @@ function ManagerSection() {
           ))}
           {recentTasks.length === 0 && (
             <p className="text-gray-500 text-sm">No recent tasks available.</p>
+          )}
+        </div>
+      </div>
+
+      {/* Team Overview */}
+      <div className="bg-white rounded-2xl shadow-sm p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-xl font-semibold">Team Overview</h2>
+        </div>
+        
+        <div className="space-y-4">
+          {employees.map((emp) => (
+            <div key={emp.id} className="border border-gray-200 rounded-xl p-5">
+              <div className="flex justify-between items-start border-b border-gray-100 pb-3 mb-3">
+                <div>
+                  <h3 className="font-bold text-gray-900">{emp.name}</h3>
+                  <p className="text-sm text-gray-500 capitalize">{emp.role.replace(/_/g, ' ')} • {emp.department || "No Department"}</p>
+                </div>
+                <div className="bg-purple-100 text-purple-700 text-xs px-3 py-1 rounded-full font-medium">
+                  {emp.active_tasks?.length || 0} Active Tasks
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                {emp.active_tasks && emp.active_tasks.length > 0 ? (
+                  emp.active_tasks.map(task => (
+                    <div key={task.id} className="flex justify-between items-center text-sm bg-gray-50 p-2 rounded-lg">
+                      <span className="font-medium text-gray-700">{task.title}</span>
+                      <div className="flex gap-3 text-xs text-gray-500">
+                        <span>{task.status}</span>
+                        {task.due_date && <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-400 italic">No active tasks assigned.</p>
+                )}
+              </div>
+            </div>
+          ))}
+          {employees.length === 0 && (
+            <p className="text-gray-500 text-sm">No approved employees found.</p>
           )}
         </div>
       </div>

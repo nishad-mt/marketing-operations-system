@@ -6,13 +6,22 @@ from .views import (
     PendingUserView,
     RejectUserView,
     ManagerDashboardStatsView,
+    EmployeeListView,
 )
+
+from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
 
     path(
         'google/',
         GoogleLoginView.as_view()
+    ),
+
+    path(
+        'refresh/',
+        TokenRefreshView.as_view(),
+        name='token_refresh'
     ),
 
     path(
@@ -33,5 +42,10 @@ urlpatterns = [
     path(
         'manager-dashboard-stats/',
         ManagerDashboardStatsView.as_view()
+    ),
+
+    path(
+        'employees/',
+        EmployeeListView.as_view()
     )
 ]

@@ -4,10 +4,18 @@ import axios from 'axios'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Sparkles, ArrowRight, User, Phone, Briefcase, ArrowLeft } from 'lucide-react'
 import logo from '../assets/catalyst_logo.png'
+import { useAuth } from '../context/AuthContext'
 
 export default function AuthPage() {
     const navigate = useNavigate()
     const location = useLocation()
+    const { login, user, loading: authLoading } = useAuth() || {}
+
+    useEffect(() => {
+        if (!authLoading && user) {
+            navigate('/dashboard', { replace: true })
+        }
+    }, [user, authLoading, navigate])
     
     // Determine initial view based on path
     const [isLoginView, setIsLoginView] = useState(location.pathname !== '/signup')
@@ -30,11 +38,14 @@ export default function AuthPage() {
                 }
             )
 
-            localStorage.setItem('access', res.data.access)
-            localStorage.setItem('refresh', res.data.refresh)
-            localStorage.setItem('user', JSON.stringify(res.data.user))
-
-            navigate('/dashboard')
+            if (login) {
+                login(res.data.user, res.data.access, res.data.refresh)
+            } else {
+                localStorage.setItem('access', res.data.access)
+                localStorage.setItem('refresh', res.data.refresh)
+                localStorage.setItem('user', JSON.stringify(res.data.user))
+                navigate('/dashboard')
+            }
         } catch (error) {
             console.log(error)
             setLoading(false)
