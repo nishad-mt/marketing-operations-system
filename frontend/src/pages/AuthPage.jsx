@@ -25,6 +25,41 @@ export default function AuthPage() {
     const [loginInfoMsg, setLoginInfoMsg] = useState("")
     const [loading, setLoading] = useState(false)
 
+    // --- Dev Login State & Logic ---
+    const [devUsername, setDevUsername] = useState("")
+    const [devPassword, setDevPassword] = useState("")
+    const [devLoading, setDevLoading] = useState(false)
+    const [devError, setDevError] = useState("")
+    const [showDevLogin, setShowDevLogin] = useState(false)
+
+    const handleDevLogin = async (e) => {
+        e.preventDefault()
+        setDevError("")
+        setDevLoading(true)
+        try {
+            const res = await axios.post(
+                'http://127.0.0.1:8000/api/auth/dev-login/',
+                { username: devUsername, password: devPassword }
+            )
+            if (login) {
+                login(res.data.user, res.data.access, res.data.refresh)
+            } else {
+                localStorage.setItem('access', res.data.access)
+                localStorage.setItem('refresh', res.data.refresh)
+                localStorage.setItem('user', JSON.stringify(res.data.user))
+                navigate('/dashboard')
+            }
+        } catch (error) {
+            setDevError(
+                error.response?.data?.error ||
+                error.response?.data?.message ||
+                "Login failed. Check credentials or backend."
+            )
+        } finally {
+            setDevLoading(false)
+        }
+    }
+
     const handleLoginSuccess = async (credentialResponse) => {
         setLoginErrorMsg("")
         setLoginInfoMsg("")
@@ -207,6 +242,69 @@ export default function AuthPage() {
                             <p className="text-[10px] text-slate-400 text-center leading-relaxed">
                                 By continuing, you agree to the terms of use, privacy policies, and security logging protocols.
                             </p>
+                        </div>
+
+                        {/* DEV ONLY: Username/Password Login */}
+                        <div className="mt-4">
+                            <button
+                                type="button"
+                                onClick={() => { setShowDevLogin(v => !v); setDevError("") }}
+                                className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl border border-dashed border-amber-300 bg-amber-50 text-amber-700 text-xs font-bold uppercase tracking-wider hover:bg-amber-100 transition-colors"
+                            >
+                                <span className="flex items-center gap-2">
+                                    <span className="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                                    Dev Login
+                                </span>
+                                <span className="text-amber-400">{showDevLogin ? '▲' : '▼'}</span>
+                            </button>
+
+                            {showDevLogin && (
+                                <form
+                                    onSubmit={handleDevLogin}
+                                    className="mt-3 p-4 rounded-2xl border border-amber-200 bg-amber-50/60 flex flex-col gap-3"
+                                >
+                                    <p className="text-[10px] text-amber-600 font-semibold uppercase tracking-wider text-center">
+                                        ⚠️ Development only — do not use in production
+                                    </p>
+
+                                    {devError && (
+                                        <p className="text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 text-center">
+                                            {devError}
+                                        </p>
+                                    )}
+
+                                    <input
+                                        id="dev-username"
+                                        type="text"
+                                        autoComplete="username"
+                                        placeholder="Username"
+                                        value={devUsername}
+                                        onChange={e => setDevUsername(e.target.value)}
+                                        required
+                                        className="w-full border border-amber-200 bg-white rounded-xl px-4 py-2.5 text-slate-800 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 placeholder-slate-400 transition"
+                                    />
+
+                                    <input
+                                        id="dev-password"
+                                        type="password"
+                                        autoComplete="current-password"
+                                        placeholder="Password"
+                                        value={devPassword}
+                                        onChange={e => setDevPassword(e.target.value)}
+                                        required
+                                        className="w-full border border-amber-200 bg-white rounded-xl px-4 py-2.5 text-slate-800 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 placeholder-slate-400 transition"
+                                    />
+
+                                    <button
+                                        id="dev-login-btn"
+                                        type="submit"
+                                        disabled={devLoading}
+                                        className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white text-sm font-bold transition-colors"
+                                    >
+                                        {devLoading ? 'Signing in…' : 'Sign in'}
+                                    </button>
+                                </form>
+                            )}
                         </div>
                     </div>
 

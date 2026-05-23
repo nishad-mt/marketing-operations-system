@@ -3,6 +3,8 @@ from decouple import config
 from google.oauth2 import id_token
 from google.auth.transport import requests
 
+from django.contrib.auth import authenticate
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -14,7 +16,52 @@ from .models import User, Department
 from .serializers import GoogleLoginSerializer
 
 
-GOOGLE_CLIENT_ID = config('GOOGLE_CLIENT_ID')
+GOOGLE_CLIENT_ID = config('GOOGLE_CLIENT_ID').strip()
+
+
+# ─────────────────────────────────────────────
+# DEV-ONLY: Username / Password login
+# Remove or guard with DEBUG=True in production
+# ─────────────────────────────────────────────
+class DevLoginView(APIView):
+
+    def post(self, request):
+        username = request.data.get('username', '').strip()
+        password = request.data.get('password', '').strip()
+
+        if not username or not password:
+            return Response(
+                {'error': 'Username and password are required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is None:
+            return Response(
+                {'error': 'Invalid credentials.'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            'message': 'Dev login successful',
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': {
+                'id': user.id,
+                'name': user.first_name or user.username,
+                'email': user.email,
+                'role': user.role if hasattr(user, 'role') else 'manager',
+                'profile_picture': user.profile_picture if hasattr(user, 'profile_picture') else None,
+                'department': (
+                    user.department.name
+                    if hasattr(user, 'department') and user.department
+                    else None
+                ),
+            }
+        })
 
 
 class GoogleLoginView(APIView):
@@ -35,11 +82,12 @@ class GoogleLoginView(APIView):
 
         try:
 
-            # Verify Google token
+            # Verify Google token (clock_skew_in_seconds handles minor drift)
             idinfo = id_token.verify_oauth2_token(
                 token,
                 requests.Request(),
-                GOOGLE_CLIENT_ID
+                GOOGLE_CLIENT_ID,
+                clock_skew_in_seconds=10
             )
 
             email = idinfo.get("email")
@@ -154,12 +202,15 @@ class GoogleLoginView(APIView):
                 status=status.HTTP_201_CREATED
             )
 
-        except ValueError:
+        except ValueError as e:
+
+            import traceback
+            traceback.print_exc()          # prints full reason to the Django console
 
             return Response(
 
                 {
-                    "error": "Invalid Google token"
+                    "error": f"Invalid Google token: {e}"
                 },
 
                 status=status.HTTP_400_BAD_REQUEST

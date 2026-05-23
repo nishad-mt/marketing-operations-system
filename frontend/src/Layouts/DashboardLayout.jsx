@@ -72,30 +72,42 @@ function DashboardLayout({ children, user }) {
         </nav>
 
 
-        <div className="p-4 border-t">
+        {/* Sidebar Bottom — Manager Profile Card */}
+        <div className="p-4 border-t border-gray-100">
+          <div className="rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 p-4 text-white">
 
-          <div className="flex items-center gap-3">
-
-            <img
-              src={avatarUrl}
-              alt="profile"
-              className="w-11 h-11 rounded-full"
-            />
-
-            <div>
-
-              <h3 className="font-semibold text-sm">
-                {user?.name}
-              </h3>
-
-              <p className="text-xs text-gray-500 capitalize">
-                {user?.role?.replace(/_/g, ' ')}
-              </p>
-
+            {/* Avatar + name row */}
+            <div className="flex items-center gap-3 mb-3">
+              <img
+                src={avatarUrl}
+                alt="profile"
+                className="w-10 h-10 rounded-full ring-2 ring-white/20 object-cover shrink-0"
+              />
+              <div className="min-w-0">
+                <p className="font-semibold text-sm leading-tight truncate">
+                  {user?.name}
+                </p>
+                <p className="text-[11px] text-slate-400 truncate">
+                  {user?.email}
+                </p>
+              </div>
             </div>
 
-          </div>
+            {/* Role badge */}
+            <div className="mb-4">
+              <span className="inline-block bg-white/10 text-white/80 text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full">
+                {user?.role?.replace(/_/g, ' ')}
+              </span>
+            </div>
 
+            {/* Logout button */}
+            <button
+              onClick={handleLogout}
+              className="w-full py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition-colors"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
 
       </aside>

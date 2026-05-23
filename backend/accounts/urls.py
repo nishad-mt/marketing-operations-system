@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     GoogleLoginView,
+    DevLoginView,
     ApproveUserView,
     PendingUserView,
     RejectUserView,
@@ -12,6 +13,12 @@ from .views import (
 from rest_framework_simplejwt.views import TokenRefreshView
 
 urlpatterns = [
+
+    # DEV-ONLY: simple username/password login
+    path(
+        'dev-login/',
+        DevLoginView.as_view()
+    ),
 
     path(
         'google/',
